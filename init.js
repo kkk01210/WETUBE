@@ -1,4 +1,3 @@
-import "./db";
 import app from "./app";
 
 
