@@ -16,6 +16,13 @@ var currentTime = document.getElementById("currentTime");
 var totalTime = document.getElementById("totalTime");
 var volumeRange = document.getElementById("jsVolume");
 
+var registerView = function registerView() {
+  var videoId = window.location.href.split("/videos")[1];
+  fetch("/api/".concat(videoId, "/view"), {
+    method: "POST"
+  });
+};
+
 function handlePlayClick() {
   if (videoPlayer.paused) {
     videoPlayer.play();
@@ -104,6 +111,7 @@ function setTotalTime() {
 }
 
 function handleEnded() {
+  registerView();
   videoPlayer.currentTime = 0;
   playBtn.innerHTML = '<i class="fas fa-play"></i>';
 }
@@ -153,15 +161,30 @@ var recorderContainer = document.getElementById("jsRecordContainer");
 var recordBtn = document.getElementById("jsRecordBtn");
 var videoPreview = document.getElementById("jsVideoPreview");
 var streamObject;
+var videoRecorder;
 
 var handleVideoData = function handleVideoData(event) {
-  console.log(event);
+  var videoFile = event.data;
+  var link = document.createElement("a");
+  link.href = URL.createObjectURL(videoFile);
+  link.download = "recorded.webm";
+  document.body.appendChild(link);
+  link.click();
+};
+
+var stopRecording = function stopRecording() {
+  videoRecorder.stop();
+  recordBtn.removeEventListener("click", stopRecording);
+  recordBtn.addEventListener("click", getVideo);
+  recordBtn.innerHTML = "Start recording";
+  stopStreamedVideo(videoPreview);
 };
 
 var startRecording = function startRecording() {
-  var videoRecorder = new MediaRecorder(streamObject);
+  videoRecorder = new MediaRecorder(streamObject);
   videoRecorder.start();
   videoRecorder.addEventListener("dataavailable", handleVideoData);
+  recordBtn.addEventListener("click", stopRecording);
 };
 
 var getVideo = /*#__PURE__*/function () {
@@ -214,6 +237,15 @@ var getVideo = /*#__PURE__*/function () {
     return _ref.apply(this, arguments);
   };
 }();
+
+function stopStreamedVideo(videoElem) {
+  var stream = videoElem.srcObject;
+  var tracks = stream.getTracks();
+  tracks.forEach(function (track) {
+    track.stop();
+  });
+  videoElem.srcObject = null;
+}
 
 function init() {
   recordBtn.addEventListener("click", getVideo);
