@@ -5,7 +5,7 @@ import cookieParser from "cookie-parser";
 import bodyParser from "body-parser";
 import passport from "passport";
 import mongoose from "mongoose";
-import session from "express-session"
+import session from "express-session";
 import MongoStore from "connect-mongo";
 import { localMiddleware } from "./middlewares";
 import routes from "./routes";
@@ -20,35 +20,39 @@ const app = express();
 
 const CokieStore = MongoStore(session);
 
-app.use(helmet({
+app.use(
+  helmet({
     contentSecurityPolicy: false,
-    }));
-app.set('view engine', "pug");
+  })
+);
+app.set("view engine", "pug");
 app.use("/uploads", express.static("uploads"));
 app.use("/static", express.static("static"));
 app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({extended:true}));
+app.use(bodyParser.urlencoded({ extended: true }));
 app.use(morgan("dev"));
 app.use(cookieParser());
 
-app.use(session({
+app.use(
+  session({
     secret: process.env.COOKIE_SECRET,
-    resave:true,
+    resave: true,
     saveUninitialized: false,
-    store: new CokieStore({mongooseConnection: mongoose.connection })
-    })
+    store: new CokieStore({ mongooseConnection: mongoose.connection }),
+  })
 );
 
 app.use(passport.initialize());
 app.use(passport.session());
 
-
 app.use(localMiddleware);
-app.use(function(req, res, next) {
-    res.setHeader("Content-Security-Policy", "script-src 'self' https://archive.org");
-    return next();
-    });
-
+app.use(function (req, res, next) {
+  res.setHeader(
+    "Content-Security-Policy",
+    "script-src 'self' https://archive.org"
+  );
+  return next();
+});
 
 app.use(routes.home, globalRouter);
 app.use(routes.users, userRouter);
